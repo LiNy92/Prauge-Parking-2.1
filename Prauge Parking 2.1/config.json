@@ -1,0 +1,23 @@
+{
+  "GarageSettings": {
+    "MaxAntalGaragePlatser": 100,
+    "MaxKapacitetPerRuta": 4,
+    "KolumnerPerRadUtskrift": 10,
+    "BussPlatser": 50
+
+  },
+  "FriaMinuter": 10,
+  "Priser": {
+    "Bil": 20,
+    "MC": 10,
+    "Buss": 80,
+    "Cykel": 5
+  },
+  "Storlek": {
+    "Bil": 4,
+    "MC": 2,
+    "Buss": 16,
+    "Cykel": 1
+  },
+  "Fordonstyp": [ "Bil", "MC", "Buss", "Cykel"]
+}
