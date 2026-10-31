@@ -166,4 +166,13 @@ public class ParkeringsGarage
 
         return null; // Ingen plass för buss
     }
+    public void NyConfigFil(AppConfig nyFil)
+    {
+        int nyaAntalet = nyFil.GarageSettings.MaxAntalGaragePlatser; 
+
+        while (_rutor.Count < nyaAntalet)
+        {
+            _rutor.Add(new ParkeringsRuta(_rutor.Count + 1, nyFil.GarageSettings.MaxKapacitetPerRuta));
+        }
+    }
 }

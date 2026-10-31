@@ -14,6 +14,10 @@ public class ParkeringsRuta : IParkeringsRuta
 
     public bool SökLedigPlats(IFordon fordon)
     {
+        if (_parkeradeFordon.Count == 0 && fordon.Storlek > MaxKapacitet)
+        {
+            return true;
+        }
         int befintligtUtrymme = _parkeradeFordon.Sum(f => f.Storlek);
         return (MaxKapacitet - befintligtUtrymme) >= fordon.Storlek;
     }

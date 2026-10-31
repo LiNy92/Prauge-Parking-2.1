@@ -11,7 +11,8 @@ public class Meny
         var garage = new ParkeringsGarage(config);
         var parkeringsvakt = new ParkeringsVakt();
 
-        DataLagring.LaddaGarage(garage);
+        DataLagring.TestDataOmFilSaknas(garage, config);
+        DataLagring.LaddaGarage(garage, config);
 
         while (true)
         {
@@ -28,8 +29,8 @@ public class Meny
                     "Administration",
                     "Avsluta program"));
 
-
-            //AnsiConsole.MarkupLine($"Du har valt: [PaleGreen3_1]{menyVal}[/]");
+            AnsiConsole.MarkupLine($"Du har valt: [palegreen3_1]{menyVal}[/]");
+            
             switch (menyVal)
             {
                 case "Checka in fordon":

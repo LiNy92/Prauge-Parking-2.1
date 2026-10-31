@@ -1,5 +1,6 @@
 ﻿using Prague_Parking_Library;
 using Spectre.Console;
+using System.Diagnostics.Metrics;
 
 namespace Prague_Parking_2._0;
 
@@ -49,38 +50,8 @@ public class ParkeringsVakt
                     nyttFordon = new Cykel(regNr, storlek);
                     break;
             }
+            UtförParkering(garage, config, nyttFordon, fordonstyp, regNr);
 
-            if (fordonstyp == "Buss")
-            {
-                List<IParkeringsRuta> ledigaRutor = garage.HittaBussParkering(nyttFordon, config);
-
-                    if (ledigaRutor == null)
-                {
-                    AnsiConsole.MarkupLine("[LightCoral]Tyvärr finns ingen bussparkering tillgänglig.[/]");
-                    return;
-                }
-                    foreach (var ruta in ledigaRutor)
-                {
-                    ruta.LäggTillFordon(nyttFordon);
-                }
-                string bussparkering = string.Join(",", ledigaRutor.Select(r => r.Plats));
-
-                AnsiConsole.MarkupLine($"[PaleGreen3_1]Fordon:[/] {nyttFordon.Fordonstyp}\n[PaleGreen3_1]Registreringsnummer:[/] {regNr}\n[PaleGreen3_1]Incheckad på plats:[/] {bussparkering}");
-            }
-            else
-            {
-
-                IParkeringsRuta ledigRuta = garage.HittaLedigPlats(nyttFordon);
-
-                if (ledigRuta == null)
-                {
-                    AnsiConsole.MarkupLine("[LightCoral]Ingen ledig plats hittades.[/]");
-                    return;
-                }
-                ledigRuta.LäggTillFordon(nyttFordon);
-
-                AnsiConsole.MarkupLine($"[PaleGreen3_1]Fordon:[/] {nyttFordon.Fordonstyp}\n[PaleGreen3_1]Registreringnummer:[/] {regNr}\n[PaleGreen3_1]Incheckad på plats:[/] {ledigRuta.Plats}");
-            }
         }
     }
     public void Utcheckning(ParkeringsGarage garage, AppConfig config)
@@ -284,5 +255,83 @@ public class ParkeringsVakt
     .Border(BoxBorder.Rounded)
     .Padding(0, 0);
         AnsiConsole.Write(prisLista);
+    }
+    public void UtförParkering(ParkeringsGarage garage, AppConfig config, IFordon fordon, string fordonstyp, string regNr)
+    {
+        if (fordonstyp == "Buss")
+        {
+            List<IParkeringsRuta> ledigaRutor = garage.HittaBussParkering(fordon, config);
+
+            if (ledigaRutor == null)
+            {
+                AnsiConsole.MarkupLine("[LightCoral]Tyvärr finns ingen bussparkering tillgänglig.[/]");
+                return;
+            }
+            foreach (var ruta in ledigaRutor)
+            {
+                ruta.LäggTillFordon(fordon);
+            }
+            string bussparkering = string.Join(",", ledigaRutor.Select(r => r.Plats));
+
+            AnsiConsole.MarkupLine($"[PaleGreen3_1]Fordon:[/] {fordon.Fordonstyp}\n[PaleGreen3_1]Registreringsnummer:[/] {regNr}\n[PaleGreen3_1]Incheckad på plats:[/] {bussparkering}");
+        }
+        else
+        {
+
+            IParkeringsRuta? ledigRuta = garage.HittaLedigPlats(fordon);
+
+            if (ledigRuta == null)
+            {
+                AnsiConsole.MarkupLine("[LightCoral]Ingen ledig plats hittades.[/]");
+                return;
+            }
+            ledigRuta.LäggTillFordon(fordon);
+
+            AnsiConsole.MarkupLine($"[PaleGreen3_1]Fordon:[/] {fordon.Fordonstyp}\n[PaleGreen3_1]Registreringnummer:[/] {regNr}\n[PaleGreen3_1]Incheckad på plats:[/] {ledigRuta.Plats}");
+        }
+    }
+    static void UppdateraConfigFil(ParkeringsGarage garage, AppConfig config)
+    {
+        var val = AnsiConsole.Prompt(
+        new SelectionPrompt<string>()
+        .Title("[LightPink3]=== Administration ===[/]")
+        .HighlightStyle(new Style(foreground: Color.LightPink3))
+        .AddChoices("Uppdatera konfigurationsfil")
+        .AddChoices("Avbryt"));
+
+        switch (val)
+        {
+            case "Uppdatera konfigurationsfil":
+                try
+                {
+                    AppConfig nyConfig = Konfigurationshanterare.Ladda();
+
+                    int nyttAntalPlatser = nyConfig.GarageSettings.MaxAntalGaragePlatser;
+
+                    if (nyttAntalPlatser < garage.Rutor.Count)
+                    {
+                        for (int i = nyttAntalPlatser; i < garage.Rutor.Count; i++)
+                        {
+                            if (garage.Rutor[i].ParkeradeFordon.Count > 0)
+                            {
+                                AnsiConsole.MarkupLine($"[LightCoral]Kan ej uppdatera: Går ej att minska antalet platser till {nyttAntalPlatser} då det står fordon på plats {garage.Rutor[i].Plats}![/]");
+                                return;
+                            }
+                        }
+                    }
+                    garage.NyConfigFil(nyFil);
+
+                    AnsiConsole.MarkupLine("[LightGreen]Konfigurationen har uppdaterats framgångsrikt![/]");
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine($"[LightCoral]Ett fel uppstod vid inläsning av konfig: {ex.Message}[/]");
+                }
+                break;
+        }
+
+            case "Avbryt":
+                return;
+        }
     }
 }
