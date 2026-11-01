@@ -5,7 +5,7 @@ namespace Prague_Parking_2._0;
 
 public class Konfigurationshanterare
 {
-    public static AppConfig Ladda()
+    public static AppConfig LäsaJsonFil()
     {
         string filNamn = "Config.json";
 

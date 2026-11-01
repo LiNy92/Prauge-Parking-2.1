@@ -1,6 +1,5 @@
 ﻿using Prague_Parking_Library;
 using Spectre.Console;
-using System.Diagnostics.Metrics;
 
 namespace Prague_Parking_2._0;
 
@@ -290,48 +289,55 @@ public class ParkeringsVakt
             AnsiConsole.MarkupLine($"[PaleGreen3_1]Fordon:[/] {fordon.Fordonstyp}\n[PaleGreen3_1]Registreringnummer:[/] {regNr}\n[PaleGreen3_1]Incheckad på plats:[/] {ledigRuta.Plats}");
         }
     }
-    static void UppdateraConfigFil(ParkeringsGarage garage, AppConfig config)
+    public ParkeringsGarage UppdateraConfigFil(ParkeringsGarage nuvarandeGarage, AppConfig config)
     {
         var val = AnsiConsole.Prompt(
-        new SelectionPrompt<string>()
-        .Title("[LightPink3]=== Administration ===[/]")
-        .HighlightStyle(new Style(foreground: Color.LightPink3))
-        .AddChoices("Uppdatera konfigurationsfil")
-        .AddChoices("Avbryt"));
+            new SelectionPrompt<string>()
+            .Title("[LightPink3]=== Administration ===[/]")
+            .HighlightStyle(new Style(foreground: Color.LightPink3))
+            .AddChoices("Uppdatera konfigurationsfil")
+            .AddChoices("Avbryt"));
 
         switch (val)
         {
             case "Uppdatera konfigurationsfil":
                 try
                 {
-                    AppConfig nyConfig = Konfigurationshanterare.Ladda();
-
+                    AppConfig nyConfig = Konfigurationshanterare.LäsaJsonFil();
                     int nyttAntalPlatser = nyConfig.GarageSettings.MaxAntalGaragePlatser;
 
-                    if (nyttAntalPlatser < garage.Rutor.Count)
+                    if (nyttAntalPlatser < nuvarandeGarage.Rutor.Count)
                     {
-                        for (int i = nyttAntalPlatser; i < garage.Rutor.Count; i++)
+                        for (int i = nyttAntalPlatser; i < nuvarandeGarage.Rutor.Count; i++)
                         {
-                            if (garage.Rutor[i].ParkeradeFordon.Count > 0)
+                            if (nuvarandeGarage.Rutor[i].ParkeradeFordon.Count > 0)
                             {
-                                AnsiConsole.MarkupLine($"[LightCoral]Kan ej uppdatera: Går ej att minska antalet platser till {nyttAntalPlatser} då det står fordon på plats {garage.Rutor[i].Plats}![/]");
-                                return;
+                                AnsiConsole.MarkupLine($"[LightCoral]Kan ej uppdatera: Går ej att minska antalet platser till {nyttAntalPlatser} då det står fordon på plats {nuvarandeGarage.Rutor[i].Plats}![/]");
+                                return nuvarandeGarage; // Behåll det gamla
                             }
                         }
                     }
-                    garage.NyConfigFil(nyFil);
+
+                    //// Spara nuvarande läge
+                    //DataLagring.SparaGarage(nuvarandeGarage);
+
+                    // Skapa det nya garaget baserat på den nya konfigen
+                    ParkeringsGarage nyttGarage = new ParkeringsGarage(nyConfig);
+                    DataLagring.LaddaGarage(nyttGarage, nyConfig);
 
                     AnsiConsole.MarkupLine("[LightGreen]Konfigurationen har uppdaterats framgångsrikt![/]");
+                    return nyttGarage; // Skicka tillbaka det sprillans nya garaget till menyn!
                 }
                 catch (Exception ex)
                 {
                     AnsiConsole.MarkupLine($"[LightCoral]Ett fel uppstod vid inläsning av konfig: {ex.Message}[/]");
+                    return nuvarandeGarage;
                 }
-                break;
-        }
 
             case "Avbryt":
-                return;
+                return nuvarandeGarage;
         }
+
+        return nuvarandeGarage;
     }
 }

@@ -107,18 +107,18 @@ public class DataLagring
         }
     }
 
-    public static void TestDataOmFilSaknas(ParkeringsGarage garage, AppConfig config)
-    {
-        if (File.Exists(Filnamn))
-        {
-            return;
-        }
+    //public static void TestDataOmFilSaknas(ParkeringsGarage garage, AppConfig config)
+    //{
+    //    if (!File.Exists(Filnamn) || new FileInfo(Filnamn).Length == 0)
+    //    {
+    //        return;
+    //    }
 
-        garage.LäggTillFordon(new Bil("ABC123", 4), 1);
-        garage.LäggTillFordon(new MC("QWE123", 2), 2);
+    //    garage.LäggTillFordon(new Bil("ABC123", 4), 1);
+    //    garage.LäggTillFordon(new MC("QWE123", 2), 2);
 
-        SparaGarage(garage);
-    }
+    //    SparaGarage(garage);
+    //}
 
 }
 public class SparatFordon

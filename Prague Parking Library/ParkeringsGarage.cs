@@ -168,11 +168,18 @@ public class ParkeringsGarage
     }
     public void NyConfigFil(AppConfig nyFil)
     {
-        int nyaAntalet = nyFil.GarageSettings.MaxAntalGaragePlatser; 
+        int kolumnPerRad = nyFil.GarageSettings.KolumnerPerRadUtskrift;
+
+        int nyaAntalet = nyFil.GarageSettings.MaxAntalGaragePlatser;
 
         while (_rutor.Count < nyaAntalet)
         {
             _rutor.Add(new ParkeringsRuta(_rutor.Count + 1, nyFil.GarageSettings.MaxKapacitetPerRuta));
+        }
+
+        while (_rutor.Count > nyaAntalet)
+        {
+            _rutor.RemoveAt(_rutor.Count - 1);
         }
     }
 }

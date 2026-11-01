@@ -1,6 +1,6 @@
 {
   "GarageSettings": {
-    "MaxAntalGaragePlatser": 100,
+    "MaxAntalGaragePlatser": 150,
     "MaxKapacitetPerRuta": 4,
     "KolumnerPerRadUtskrift": 10,
     "BussPlatser": 50
