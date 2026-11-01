@@ -63,11 +63,28 @@ public class Meny
                     }
                 case "Administration":
                     {
-                        parkeringsvakt.UppdateraConfigFil(garage, config);
+                        var val = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                                .Title("[LightPink3]=== Administration ===[/]")
+                                .AddChoices("Uppdatera konfigurationsfilen", "Avbryt"));
 
-                        config = Konfigurationshanterare.LäsaJsonFil();
-                        garage = new ParkeringsGarage(config);
-                        DataLagring.LaddaGarage(garage, config);
+                        if (val == "Uppdatera konfigurationsfilen")
+                        {
+                            try
+                            {
+                                DataLagring.SparaGarage(garage);
+                                var nyConfig = Konfigurationshanterare.ÖppnaOchLäsJsonFil();
+                                var nyttGarage = new ParkeringsGarage(nyConfig);
+                                DataLagring.LaddaGarage(nyttGarage, nyConfig);
+                                config = nyConfig;
+                                garage = nyttGarage;
+                                AnsiConsole.MarkupLine("[LightGreen]Konfigurationen har uppdaterats.[/]");
+                            }
+                            catch (Exception ex)
+                            {
+                                AnsiConsole.MarkupLine($"[LightCoral]Konfigurationen kunde inte läsas in: {ex.Message}[/]");
+                            }
+                        }
                         break;
                     }
                 case "Avsluta program":

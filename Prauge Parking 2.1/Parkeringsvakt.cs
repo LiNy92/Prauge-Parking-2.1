@@ -7,7 +7,7 @@ public class ParkeringsVakt
 {
     public void Incheckning(ParkeringsGarage garage, AppConfig config)
     {
-        VisaPrislista();
+        VisaPrislista(config);
         var fordonstyp = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                 .Title("Vilket fordon önskar du checka in?")
@@ -74,7 +74,7 @@ public class ParkeringsVakt
         PrisLista prisLista = new PrisLista(config);
         decimal kostnad = prisLista.BeräknaKostnad(fordon);
 
-        ruta.TaBortFordon(regNr);
+        garage.TaBortFordon(regNr);
 
         TimeSpan tidParkerad = RäknaUtParkeringstid(fordon);
 
@@ -88,7 +88,18 @@ public class ParkeringsVakt
     }
     public string AngeRegNr()
     {
-        var regNr = AnsiConsole.Ask<string>("[Cornsilk1]\nVänligen ange registreringsnummer (max 10 tecken):[/]").ToUpper().Trim();
+        var regNr = AnsiConsole.Prompt(
+            new TextPrompt<string>("[Cornsilk1]\nVänligen ange registreringsnummer (max 10 tecken):[/]")
+                .Validate(input =>
+                {
+                    string värde = input.Trim();
+                    if (värde.Length == 0 || värde.Length > 10)
+                    {
+                        return ValidationResult.Error("[LightCoral]Registreringsnumret måste vara mellan 1 och 10 tecken.[/]");
+                    }
+
+                    return ValidationResult.Success();
+                })).Trim().ToUpper();
         AnsiConsole.MarkupLine($"Du angav registreringsnummer: [LightSkyBlue1]{regNr}[/]");
         return regNr;
     }
@@ -220,7 +231,7 @@ public class ParkeringsVakt
                     {
                         int upptaget = ruta.ParkeradeFordon.Sum(fordon => fordon.Storlek);
                         string färg;
-                        if (upptaget == ruta.MaxKapacitet) { färg = "IndianRed1"; }
+                        if (upptaget >= ruta.MaxKapacitet) { färg = "IndianRed1"; }
                         else { färg = "LightGoldenrod2_1"; }
 
                         var fordonRader = ruta.ParkeradeFordon
@@ -247,19 +258,21 @@ public class ParkeringsVakt
         TimeSpan tidParkerad = DateTime.UtcNow - fordon.AnkomstTid;
         return tidParkerad;
     }
-    public static void VisaPrislista()
+    public static void VisaPrislista(AppConfig config)
     {
-        var prisLista = new Panel("Friparkering: 10 minuter\n[LightSkyBlue1]Bil:[/] 20 CZK/h\n[LightSkyBlue1]MC:[/] 10 CZK/h\nTimpris - Per påbörjade timme.".TrimEnd())
-    .Header("\n[yellow]Prislista[/]")
-    .Border(BoxBorder.Rounded)
-    .Padding(0, 0);
+        string prisrader = string.Join(Environment.NewLine,
+            config.Fordonstyp.Select(typ => $"[LightSkyBlue1]{typ}:[/] {config.Priser[typ]} CZK/h"));
+        var prisLista = new Panel($"Friparkering: {config.FriaMinuter} minuter\n{prisrader}\nTimpris - Per påbörjad timme.")
+            .Header("\n[yellow]Prislista[/]")
+            .Border(BoxBorder.Rounded)
+            .Padding(0, 0);
         AnsiConsole.Write(prisLista);
     }
     public void UtförParkering(ParkeringsGarage garage, AppConfig config, IFordon fordon, string fordonstyp, string regNr)
     {
         if (fordonstyp == "Buss")
         {
-            List<IParkeringsRuta> ledigaRutor = garage.HittaBussParkering(fordon, config);
+            List<IParkeringsRuta>? ledigaRutor = garage.HittaBussParkering(fordon, config);
 
             if (ledigaRutor == null)
             {
@@ -288,56 +301,5 @@ public class ParkeringsVakt
 
             AnsiConsole.MarkupLine($"[PaleGreen3_1]Fordon:[/] {fordon.Fordonstyp}\n[PaleGreen3_1]Registreringnummer:[/] {regNr}\n[PaleGreen3_1]Incheckad på plats:[/] {ledigRuta.Plats}");
         }
-    }
-    public ParkeringsGarage UppdateraConfigFil(ParkeringsGarage nuvarandeGarage, AppConfig config)
-    {
-        var val = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-            .Title("[LightPink3]=== Administration ===[/]")
-            .HighlightStyle(new Style(foreground: Color.LightPink3))
-            .AddChoices("Uppdatera konfigurationsfil")
-            .AddChoices("Avbryt"));
-
-        switch (val)
-        {
-            case "Uppdatera konfigurationsfil":
-                try
-                {
-                    AppConfig nyConfig = Konfigurationshanterare.LäsaJsonFil();
-                    int nyttAntalPlatser = nyConfig.GarageSettings.MaxAntalGaragePlatser;
-
-                    if (nyttAntalPlatser < nuvarandeGarage.Rutor.Count)
-                    {
-                        for (int i = nyttAntalPlatser; i < nuvarandeGarage.Rutor.Count; i++)
-                        {
-                            if (nuvarandeGarage.Rutor[i].ParkeradeFordon.Count > 0)
-                            {
-                                AnsiConsole.MarkupLine($"[LightCoral]Kan ej uppdatera: Går ej att minska antalet platser till {nyttAntalPlatser} då det står fordon på plats {nuvarandeGarage.Rutor[i].Plats}![/]");
-                                return nuvarandeGarage; // Behåll det gamla
-                            }
-                        }
-                    }
-
-                    //// Spara nuvarande läge
-                    //DataLagring.SparaGarage(nuvarandeGarage);
-
-                    // Skapa det nya garaget baserat på den nya konfigen
-                    ParkeringsGarage nyttGarage = new ParkeringsGarage(nyConfig);
-                    DataLagring.LaddaGarage(nyttGarage, nyConfig);
-
-                    AnsiConsole.MarkupLine("[LightGreen]Konfigurationen har uppdaterats framgångsrikt![/]");
-                    return nyttGarage; // Skicka tillbaka det sprillans nya garaget till menyn!
-                }
-                catch (Exception ex)
-                {
-                    AnsiConsole.MarkupLine($"[LightCoral]Ett fel uppstod vid inläsning av konfig: {ex.Message}[/]");
-                    return nuvarandeGarage;
-                }
-
-            case "Avbryt":
-                return nuvarandeGarage;
-        }
-
-        return nuvarandeGarage;
     }
 }

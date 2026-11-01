@@ -90,19 +90,19 @@ public class ParkeringsGarage
     }
     public IFordon TaBortFordon(string regNr)
     {
-        IParkeringsRuta ruta = SökaFordonsPlats(regNr);
-        if (ruta == null)
+        IParkeringsRuta? ruta = SökaFordonsPlats(regNr);
+        IFordon? fordon = ruta?.HittaFordonIRuta(regNr);
+        if (fordon == null)
         {
             return null;
         }
-        IFordon fordonAttCheckaUt = ruta.HittaFordonIRuta(regNr);
 
-        if (fordonAttCheckaUt != null)
+        foreach (var parkeringsRuta in Rutor)
         {
-            ruta.TaBortFordon(regNr);
-            return fordonAttCheckaUt;
+            parkeringsRuta.TaBortFordon(regNr);
         }
-        return null;
+
+        return fordon;
     }
 
     public Flyttresultat FlyttaFordon(string regNr, int valdPlats)

@@ -1,6 +1,6 @@
 {
   "GarageSettings": {
-    "MaxAntalGaragePlatser": 150,
+    "MaxAntalGaragePlatser": 100,
     "MaxKapacitetPerRuta": 4,
     "KolumnerPerRadUtskrift": 10,
     "BussPlatser": 50
@@ -14,7 +14,7 @@
     "Cykel": 5
   },
   "Storlek": {
-    "Bil": 4,
+    "Bil": 4, 
     "MC": 2,
     "Buss": 16,
     "Cykel": 1

@@ -9,10 +9,8 @@ internal class Program
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
         AppConfig config = Konfigurationshanterare.LäsaJsonFil();
-
         var meny = new Meny();
         meny.StartaMeny(config);
-
     }
 
 }
